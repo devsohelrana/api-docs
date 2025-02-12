@@ -23,31 +23,35 @@ public function domains($key = '')
 
 #### Get Email
 ```
-https://priyo.email/api/email/dina@priyomail.net/5VmjtebU6s3yWnwAELSd
+https://priyo.email/api/random-email/5VmjtebU6s3yWnwAELSd
 ```
 
 ```php
 // get email
-public function email($email = '', $key = '')
+public function randomEmail($key = '')
 {
 	$keys = Setting::pick('api_keys');
 	if (in_array($key, $keys)) {
-		if ($email) {
-			try {
-				$split = explode('@', $email);
-				if (in_array($split[0], config('app.settings.forbidden_ids'))) {
-					return response()->json('Username not allowed', 406);
-				}
-				if (strlen($split[0]) < config('app.settings.custom.min') || strlen($split[0]) > config('app.settings.custom.max')) {
-					return response()->json('Username length cannot be less than' . ' ' . config('app.settings.custom.min') . ' ' . 'and greator than' . ' ' . config('app.settings.custom.max'), 406);
-				}
-				return TMail::createCustomEmail($split[0], $split[1]);
-			} catch (Exception $e) {
-				return TMail::generateRandomEmail(false);
-			}
-		} else {
-			return TMail::generateRandomEmail(false);
-		}
+		// make new email random 
+		$email = TMail::generateRandomEmail(false);
+		$nEmail = $email;
+
+		$password =  Str::random(6, 'lowercase');
+		$recoveryMail =   '';
+
+		Log::create([
+			'ip' => request()->ip(),
+			'email' => $nEmail,
+			'password' => $password,
+			'recoveryMail' => $recoveryMail,
+		]);
+
+		return response()->json(
+			[
+				'email' => $nEmail,
+				'password' => $password
+			]
+		);
 	} else {
 		return abort(401);
 	}
